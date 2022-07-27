@@ -6,6 +6,8 @@ const methodOverride = require("method-override");
 const AppError = require("./AppError");
 
 const Product = require("./models/product");
+const Farm = require("./models/farm");
+
 
 mongoose
   .connect("mongodb://localhost:27017/farmStand", {
@@ -26,7 +28,66 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
-//
+function wrapAsync(fn) {
+  return function (req, res, next) {
+    fn(req, res, next).catch((e) => next(e));
+  };
+}
+
+// FARM ROUTES
+
+//create a farm
+app.get("/farms", async (req, res) => {
+  const farms = await Farm.find({});
+  res.render("farms/index", { farms });
+});
+
+app.get("/farms/new", (req, res) => {
+  res.render("farms/new");
+});
+
+app.post(
+  "/farms",
+  wrapAsync(async (req, res, next) => {
+    const newFarm = new Farm(req.body);
+    await newFarm.save();
+    res.redirect(`/farms`);
+  })
+);
+
+// read farms data
+app.get(
+  "/farms/:id",
+  wrapAsync(async (req, res, next) => {
+    const { id } = req.params;
+    const farm = await Farm.findById(id).populate('products');
+    console.log(farm)
+    if (!farm) {
+      throw next(new AppError("Farm not Found!", 404));
+    }
+    res.render("farms/show", { farm });
+  })
+);
+
+//link a new product to a particular farm
+app.get('/farms/:id/products/new', (req, res) => {
+  const { id } = req.params;
+  res.render('products/new', {categories, id});
+})
+
+app.post('/farms/:id/products', async(req, res) => {
+  const id = (req.params.id).trim();
+  const farm = await Farm.findById(id);
+  const { name, price, category } = req.body;
+  const product = new Product({ name, price, category });
+  farm.products.push(product);
+  product.farm = farm;
+  await farm.save();  
+  await product.save();
+  res.redirect(`/farms/${id}`);
+})
+
+
 
 // PRODUCT ROUTES
 const categories = ["fruit", "vegetable", "dairy"];
@@ -45,12 +106,6 @@ app.get("/products", async (req, res) => {
 app.get("/products/new", (req, res) => {
   res.render("products/new", { categories });
 });
-
-function wrapAsync(fn) {
-  return function (req, res, next) {
-    fn(req, res, next).catch((e) => next(e));
-  };
-}
 
 app.post(
   "/products",
@@ -80,7 +135,8 @@ app.get("/products/:id/edit", async (req, res) => {
 });
 
 // Update
-app.put("/products/:id",
+app.put(
+  "/products/:id",
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
     const product = await Product.findByIdAndUpdate(id, req.body, {
@@ -100,7 +156,7 @@ app.delete("/products/:id", async (req, res) => {
 app.use((err, req, res, next) => {
   console.log(err.name);
   next(err);
-})
+});
 
 app.use((err, req, res, next) => {
   const { status = 500, message = "Something went wrong" } = err;

@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { Schema } = moongose;
+const { Schema } = mongoose;
 
 const farmSchema = new Schema({
   name: {
@@ -21,6 +21,6 @@ const farmSchema = new Schema({
   ],
 });
 
-const Farm = moongose.model("Farm", farmSchema);
+const Farm = mongoose.model("Farm", farmSchema);
 
 module.exports = Farm;
