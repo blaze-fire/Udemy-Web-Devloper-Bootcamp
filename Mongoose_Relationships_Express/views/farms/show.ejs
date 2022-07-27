@@ -15,10 +15,20 @@
     <h2>Products</h2>
     <ul>
       <% for(let product of farm.products ){%>
-          <li><%= product.name %> (<%= product.category %> ): Rs.<%= product.price %>  </li>
+          <li><a href="/products/<%= product._id %>"><%= product.name %></a> </li>
         <% } %>  
     </ul>
-    <a href="/farms/<%= farm._id %>/products/new">Add a product</a>
-    <a href="/farms">All Farms</a>
-  </body>
+    
+    <div>
+      <a href="/farms/<%= farm._id %>/products/new">Add a product</a>
+    </div>
+    <div>
+      <a href="/farms">All Farms</a>
+    </div>
+    <div>
+      <form action="/farms/<%= farm._id %>?_method=DELETE" method="POST">
+        <button>Delete</button>
+      </form>
+    </div>
+  </body> 
 </html>

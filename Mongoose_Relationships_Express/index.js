@@ -61,7 +61,6 @@ app.get(
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
     const farm = await Farm.findById(id).populate('products');
-    console.log(farm)
     if (!farm) {
       throw next(new AppError("Farm not Found!", 404));
     }
@@ -70,9 +69,10 @@ app.get(
 );
 
 //link a new product to a particular farm
-app.get('/farms/:id/products/new', (req, res) => {
+app.get('/farms/:id/products/new', async(req, res) => {
   const { id } = req.params;
-  res.render('products/new', {categories, id});
+  const farm = await Farm.findById(id);
+  res.render('products/new', {categories, id, farm});
 })
 
 app.post('/farms/:id/products', async(req, res) => {
@@ -85,6 +85,13 @@ app.post('/farms/:id/products', async(req, res) => {
   await farm.save();  
   await product.save();
   res.redirect(`/farms/${id}`);
+})
+
+
+app.delete("/farms/:id", async(req, res) => {
+  const { id } = req.params;
+  const farm = await Farm.findByIdAndDelete(id);
+  res.redirect('/farms')
 })
 
 
@@ -120,7 +127,7 @@ app.get(
   "/products/:id",
   wrapAsync(async (req, res, next) => {
     const { id } = req.params;
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).populate('farm');
     if (!product) {
       throw next(new AppError("Product not found", 404));
     }
