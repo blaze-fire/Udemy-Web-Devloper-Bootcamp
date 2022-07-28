@@ -7,7 +7,11 @@ const AppError = require("./AppError");
 
 const Product = require("./models/product");
 const Farm = require("./models/farm");
-
+const flash = require('connect-flash');
+const session = require('express-session');
+const sessionOptions = {secret: '1234', resave: false, saveUninitialized: false}; 
+app.use(session(sessionOptions));
+app.use(flash());
 
 mongoose
   .connect("mongodb://localhost:27017/farmStand", {
@@ -28,6 +32,11 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
+app.use((req, res, next) => {
+  res.locals.messages = req.flash('success');
+  next();
+})
+
 function wrapAsync(fn) {
   return function (req, res, next) {
     fn(req, res, next).catch((e) => next(e));
@@ -35,13 +44,13 @@ function wrapAsync(fn) {
 }
 
 // FARM ROUTES
-
-//create a farm
+//show all farms
 app.get("/farms", async (req, res) => {
   const farms = await Farm.find({});
   res.render("farms/index", { farms });
 });
 
+//create a farm
 app.get("/farms/new", (req, res) => {
   res.render("farms/new");
 });
@@ -51,6 +60,7 @@ app.post(
   wrapAsync(async (req, res, next) => {
     const newFarm = new Farm(req.body);
     await newFarm.save();
+    req.flash('success', 'Succefully made a new farm');
     res.redirect(`/farms`);
   })
 );
