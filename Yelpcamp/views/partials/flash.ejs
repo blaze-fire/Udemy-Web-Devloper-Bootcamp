@@ -8,9 +8,8 @@
     aria-label="Close"
   ></button>
 </div>
-<% } %>
-
-<% if(error.length){ %>
+<% } %> <% if(error.length){ %>
+<div class="col-6 offset-3">
   <div class="alert alert-danger alert-dismissible fade show" role="alert">
     <%= error %>
     <button
@@ -20,5 +19,5 @@
       aria-label="Close"
     ></button>
   </div>
-  <% } %>
-  
+</div>
+<% } %>

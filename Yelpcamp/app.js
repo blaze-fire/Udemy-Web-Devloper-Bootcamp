@@ -5,8 +5,13 @@ const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError");
 const campgroundRoutes = require("./routes/campgrounds");
 const reviewRoutes = require("./routes/reviews");
+const userRoutes = require("./routes/users");
 const session = require("express-session");
-const flash = require('connect-flash');
+const flash = require("connect-flash");
+const path = require("path");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+const User = require("./models/user");
 
 mongoose.connect("mongodb://localhost:27017/yelp-camp", {
   useNewUrlParser: true,
@@ -20,7 +25,6 @@ db.once("open", () => {
 });
 
 const app = express();
-const path = require("path");
 
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
@@ -29,7 +33,6 @@ app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOvereide("_method"));
 app.use(express.static(path.join(__dirname, "public")));
-app.use(flash());
 
 const sessionConfig = {
   secret: "1234",
@@ -44,13 +47,30 @@ const sessionConfig = {
 
 app.use(session(sessionConfig));
 
+app.use(flash());
+app.use(passport.initialize());
+
+//make sure session used before passport.session
+app.use(passport.session());
+
+// in built function for authenticate
+passport.use(new LocalStrategy(User.authenticate()));
+
+// store user in the session
+passport.serializeUser(User.serializeUser());
+
+// get user out of the session
+passport.deserializeUser(User.deserializeUser());
+
 app.use((req, res, next) => {
-    res.locals.success = req.flash('success');
-    res.locals.error = req.flash('error');
-    next();
-})
+  console.log("Here", req.session.returnTo)
+  res.locals.currentUser = req.user;
+  res.locals.success = req.flash("success");
+  res.locals.error = req.flash("error");
+  next();
+});
 
-
+app.use("/", userRoutes);
 app.use("/campgrounds", campgroundRoutes);
 app.use("/campgrounds/:id/reviews", reviewRoutes);
 
