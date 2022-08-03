@@ -2,9 +2,6 @@ const express = require("express");
 const router = express.Router({ mergeParams: true });
 const catchAsync = require("../utils/catchAsync");
 const User = require("../models/user");
-const { reviewSchema } = require("../schema");
-const Review = require("../models/reviews");
-const ExpressError = require("../utils/ExpressError");
 const passport = require("passport");
 
 router.get("/register", (req, res) => {
@@ -46,6 +43,7 @@ router.post(
   }),
   (req, res) => {
     req.flash("success", "Welcome Back!");
+    console.log("Login URL: ", req.session.returnTo, req.originalUrl, req.path)
     const redirectUrl = req.session.returnTo || '/campgrounds';
     delete req.session.returnTo;
     res.redirect(redirectUrl);
